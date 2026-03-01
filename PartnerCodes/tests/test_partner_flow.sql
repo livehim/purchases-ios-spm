@@ -35,13 +35,30 @@ BEGIN
                                           OR user_id_2 IN (user_a_id, user_b_id, user_c_id);
     DELETE FROM public.partner_codes WHERE owner_user_id IN (user_a_id, user_b_id, user_c_id);
     DELETE FROM public.user_profiles WHERE id IN (user_a_id, user_b_id, user_c_id);
+    DELETE FROM auth.users WHERE id IN (user_a_id, user_b_id, user_c_id);
 
-    -- Create test user profiles
-    INSERT INTO public.user_profiles (id, display_name, email, is_premium, premium_source, revenuecat_app_user_id)
+    -- Create test users in auth.users (trigger auto-creates user_profiles)
+    INSERT INTO auth.users (id, email)
     VALUES
-        (user_a_id, 'Alice', 'alice@test.com', TRUE, 'direct_purchase', 'rc_alice_123'),
-        (user_b_id, 'Bob', 'bob@test.com', FALSE, NULL, 'rc_bob_456'),
-        (user_c_id, 'Charlie', 'charlie@test.com', FALSE, NULL, 'rc_charlie_789');
+        (user_a_id, 'alice@test.com'),
+        (user_b_id, 'bob@test.com'),
+        (user_c_id, 'charlie@test.com');
+
+    -- Update the auto-created profiles with test data
+    UPDATE public.user_profiles
+    SET display_name = 'Alice', is_premium = TRUE, premium_source = 'direct_purchase',
+        revenuecat_app_user_id = 'rc_alice_123'
+    WHERE id = user_a_id;
+
+    UPDATE public.user_profiles
+    SET display_name = 'Bob', is_premium = FALSE, premium_source = NULL,
+        revenuecat_app_user_id = 'rc_bob_456'
+    WHERE id = user_b_id;
+
+    UPDATE public.user_profiles
+    SET display_name = 'Charlie', is_premium = FALSE, premium_source = NULL,
+        revenuecat_app_user_id = 'rc_charlie_789'
+    WHERE id = user_c_id;
 
     RAISE NOTICE '✓ Test users created: Alice (premium), Bob (free), Charlie (free)';
 
@@ -249,6 +266,7 @@ BEGIN
                                           OR user_id_2 IN (user_a_id, user_b_id, user_c_id);
     DELETE FROM public.partner_codes WHERE owner_user_id IN (user_a_id, user_b_id, user_c_id);
     DELETE FROM public.user_profiles WHERE id IN (user_a_id, user_b_id, user_c_id);
+    DELETE FROM auth.users WHERE id IN (user_a_id, user_b_id, user_c_id);
 
     RAISE NOTICE '';
     RAISE NOTICE 'Test data cleaned up.';
