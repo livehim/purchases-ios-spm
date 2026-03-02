@@ -7,7 +7,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { createUserClient } from "../_shared/supabase-client.ts";
+import { createUserClient, createServiceClient } from "../_shared/supabase-client.ts";
 
 serve(async (req: Request) => {
   // Handle CORS preflight
@@ -30,6 +30,28 @@ serve(async (req: Request) => {
 
     // Create Supabase client with user's auth
     const supabase = createUserClient(authHeader);
+
+    // Ensure user profile exists before calling RPC
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const serviceClient = createServiceClient();
+    await serviceClient.from("user_profiles").upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        display_name: user.email ? user.email.split("@")[0] : null,
+      },
+      { onConflict: "id", ignoreDuplicates: true }
+    );
 
     // Call the database function to get partner status
     const { data, error } = await supabase.rpc("get_partner_status");

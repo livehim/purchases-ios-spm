@@ -96,15 +96,17 @@ async function handleClientSync(authHeader: string, body: SyncPremiumRequest) {
   // Use service client for admin operations
   const serviceClient = createServiceClient();
 
-  // Update the user's premium status
+  // Upsert the user's profile + premium status (creates profile if it doesn't exist)
   const { error: updateError } = await serviceClient
     .from("user_profiles")
-    .update({
+    .upsert({
+      id: user.id,
+      email: user.email ?? null,
+      display_name: user.email ? user.email.split("@")[0] : null,
       is_premium: body.is_premium,
       premium_source: body.is_premium ? "direct_purchase" : null,
       premium_expires_at: body.premium_expires_at || null,
-    })
-    .eq("id", user.id);
+    }, { onConflict: "id", ignoreDuplicates: false });
 
   if (updateError) {
     console.error("Error updating premium status:", updateError);
