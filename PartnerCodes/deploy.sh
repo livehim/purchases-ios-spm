@@ -52,7 +52,7 @@ echo ""
 # ----------------------------------------
 echo "--- Step 3: Deploying Edge Functions ---"
 
-FUNCTIONS=("generate-partner-code" "redeem-partner-code" "check-link-status" "sync-premium")
+FUNCTIONS=("generate-partner-code" "redeem-partner-code" "check-link-status" "sync-premium" "verify-setup")
 
 for func in "${FUNCTIONS[@]}"; do
     echo "  Deploying ${func}..."

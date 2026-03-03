@@ -56,14 +56,29 @@ serve(async (req: Request) => {
     }
 
     const serviceClient = createServiceClient();
-    await serviceClient.from("user_profiles").upsert(
-      {
-        id: user.id,
-        email: user.email ?? null,
-        display_name: user.email ? user.email.split("@")[0] : null,
-      },
-      { onConflict: "id", ignoreDuplicates: true }
-    );
+    const { error: upsertError } = await serviceClient
+      .from("user_profiles")
+      .upsert(
+        {
+          id: user.id,
+          email: user.email ?? null,
+          display_name: user.email ? user.email.split("@")[0] : null,
+        },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
+
+    if (upsertError) {
+      console.error("Error ensuring user profile exists:", upsertError);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to create user profile: " + upsertError.message,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Call the database function to create the partner code
     const { data, error } = await supabase.rpc("create_partner_code", {

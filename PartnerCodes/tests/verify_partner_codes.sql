@@ -46,13 +46,14 @@ BEGIN
         'unlink_partner',
         'get_partner_status',
         'handle_new_user',
-        'update_updated_at'
+        'update_updated_at',
+        'ensure_user_profile_exists'
       );
 
-    IF func_count >= 6 THEN
+    IF func_count >= 7 THEN
         RAISE NOTICE '✓ All database functions exist (% found)', func_count;
     ELSE
-        RAISE EXCEPTION '✗ Expected at least 6 functions, found %', func_count;
+        RAISE EXCEPTION '✗ Expected at least 7 functions, found %. Did you apply migration 002?', func_count;
     END IF;
 END $$;
 
@@ -127,7 +128,27 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- STEP 6: Verify Code Generation Works
+-- STEP 6: Verify ensure_user_profile_exists (Migration 002)
+-- ============================================================================
+DO $$
+DECLARE
+    func_exists BOOLEAN;
+BEGIN
+    SELECT EXISTS(
+        SELECT 1 FROM information_schema.routines
+        WHERE routine_schema = 'public'
+          AND routine_name = 'ensure_user_profile_exists'
+    ) INTO func_exists;
+
+    IF func_exists THEN
+        RAISE NOTICE '✓ ensure_user_profile_exists function exists (migration 002 applied)';
+    ELSE
+        RAISE EXCEPTION '✗ ensure_user_profile_exists function NOT found. Apply migration 002_fix_auto_create_profiles.sql';
+    END IF;
+END $$;
+
+-- ============================================================================
+-- STEP 7: Verify Code Generation Works
 -- ============================================================================
 DO $$
 DECLARE
@@ -143,7 +164,7 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- STEP 7: Verify Table Columns
+-- STEP 8: Verify Table Columns
 -- ============================================================================
 DO $$
 DECLARE
@@ -207,7 +228,7 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- STEP 8: Verify Triggers
+-- STEP 9: Verify Triggers
 -- ============================================================================
 DO $$
 DECLARE

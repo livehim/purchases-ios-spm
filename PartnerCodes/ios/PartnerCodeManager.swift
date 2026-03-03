@@ -141,6 +141,38 @@ public final class PartnerCodeManager {
         )
     }
 
+    /// Runs a comprehensive diagnostic check on the partner code backend.
+    ///
+    /// Call this to verify that:
+    /// - Auth token is valid
+    /// - User profile exists in the database
+    /// - All required database tables exist
+    /// - Database functions are accessible
+    /// - Current partner link status
+    /// - Any active/recent partner codes
+    ///
+    /// Use this to debug linking issues. Check the `errors` array for problems.
+    ///
+    /// ```swift
+    /// let diagnostic = try await PartnerCodeManager.shared.verifySetup()
+    /// print("Auth valid: \(diagnostic.authValid)")
+    /// print("Profile exists: \(diagnostic.profileExists)")
+    /// print("Tables: \(diagnostic.tablesExist)")
+    /// print("Linked: \(diagnostic.linkStatus?.isLinked ?? false)")
+    /// if !diagnostic.errors.isEmpty {
+    ///     print("ERRORS: \(diagnostic.errors)")
+    /// }
+    /// ```
+    ///
+    /// - Returns: A diagnostic response with detailed status of each component.
+    /// - Throws: `PartnerCodeError` if the request itself fails.
+    public func verifySetup() async throws -> VerifySetupResponse {
+        return try await performRequest(
+            endpoint: "verify-setup",
+            method: "GET"
+        )
+    }
+
     /// Unlinks the current user from their partner.
     ///
     /// After unlinking:
